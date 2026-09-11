@@ -42,7 +42,9 @@ function AreaAdmin({ token }: AreaAdminProps) {
   const [instituicao, setInstituicao] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erroForm, setErroForm] = useState('')
+  const [mensagemCadastro, setMensagemCadastro] = useState('')
   const [linkGerado, setLinkGerado] = useState('')
+  const [avisoCadastro, setAvisoCadastro] = useState('')
 
   // Ações por membro
   const [acaoId, setAcaoId] = useState<number | null>(null)
@@ -52,7 +54,13 @@ function AreaAdmin({ token }: AreaAdminProps) {
   const [editEmail, setEditEmail] = useState('')
   const [editInstituicao, setEditInstituicao] = useState('')
   const [editPerfil, setEditPerfil] = useState<'MEMBRO' | 'ADMIN'>('MEMBRO')
-  const [reenvio, setReenvio] = useState<{ id: number; link: string; expiraEm: string } | null>(null)
+  const [reenvio, setReenvio] = useState<{
+    id: number
+    mensagem: string
+    link: string | null
+    expiraEm: string
+    aviso: string | null
+  } | null>(null)
 
   async function carregarMembros() {
     setCarregando(true)
@@ -77,12 +85,19 @@ function AreaAdmin({ token }: AreaAdminProps) {
   async function handleCadastrar(event: React.FormEvent) {
     event.preventDefault()
     setErroForm('')
+    setMensagemCadastro('')
     setLinkGerado('')
+    setAvisoCadastro('')
     setEnviando(true)
 
     try {
       const resposta = await cadastrarMembro(token, nome, email, instituicao)
-      setLinkGerado(resposta.link_ativacao)
+      // Com envio de e-mail real (EMAIL_BACKEND=smtp) o backend não
+      // devolve mais link_ativacao quando o envio deu certo — só em
+      // modo console (dev) ou se o envio falhar (junto com "aviso").
+      setMensagemCadastro(resposta.mensagem ?? '')
+      setLinkGerado(resposta.link_ativacao ?? '')
+      setAvisoCadastro(resposta.aviso ?? '')
       setNome('')
       setEmail('')
       setInstituicao('')
@@ -170,8 +185,21 @@ function AreaAdmin({ token }: AreaAdminProps) {
       membro.id,
       () => reenviarConvite(token, membro.id),
       (resultado) => {
-        const r = resultado as { link_ativacao: string; expira_em: string }
-        setReenvio({ id: membro.id, link: r.link_ativacao, expiraEm: r.expira_em })
+        // Idem ao cadastro: link_ativacao só vem preenchido em modo
+        // console (dev) ou se o envio de e-mail tiver falhado (aviso).
+        const r = resultado as {
+          mensagem: string
+          link_ativacao?: string
+          expira_em: string
+          aviso?: string
+        }
+        setReenvio({
+          id: membro.id,
+          mensagem: r.mensagem,
+          link: r.link_ativacao ?? null,
+          expiraEm: r.expira_em,
+          aviso: r.aviso ?? null,
+        })
       }
     )
   }
@@ -266,9 +294,21 @@ function AreaAdmin({ token }: AreaAdminProps) {
             {enviando ? 'Cadastrando...' : 'Cadastrar membro'}
           </button>
 
+          {mensagemCadastro && !linkGerado && !avisoCadastro && (
+            <div className="empty" style={{ marginTop: '1rem' }}>
+              {mensagemCadastro}
+            </div>
+          )}
+
+          {avisoCadastro && (
+            <div className="error" style={{ marginTop: '1rem' }}>
+              {avisoCadastro}
+            </div>
+          )}
+
           {linkGerado && (
-            <div className="empty" style={{ marginTop: '1rem', wordBreak: 'break-all' }}>
-              Link de ativação (envio por e-mail ainda não implementado):
+            <div className="empty" style={{ marginTop: '0.5rem', wordBreak: 'break-all' }}>
+              Link de ativação{avisoCadastro ? '' : ' (envio por e-mail ainda não configurado)'}:
               <br />
               <strong>{linkGerado}</strong>
             </div>
@@ -351,10 +391,20 @@ function AreaAdmin({ token }: AreaAdminProps) {
 
               {reenvio?.id === membro.id && (
                 <div className="empty" style={{ borderTop: '1px solid #edf0f4', wordBreak: 'break-all', textAlign: 'left' }}>
-                  Novo link de ativação (envio por e-mail ainda não implementado) — expira em{' '}
-                  {new Date(reenvio.expiraEm).toLocaleString('pt-BR')}:
-                  <br />
-                  <strong>{reenvio.link}</strong>
+                  {reenvio.mensagem}
+                  {reenvio.aviso && (
+                    <div className="error" style={{ marginTop: '8px' }}>
+                      {reenvio.aviso}
+                    </div>
+                  )}
+                  {reenvio.link && (
+                    <>
+                      <br />
+                      <strong>{reenvio.link}</strong>
+                      {' — expira em '}
+                      {new Date(reenvio.expiraEm).toLocaleString('pt-BR')}
+                    </>
+                  )}
                 </div>
               )}
 
