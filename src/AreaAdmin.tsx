@@ -136,6 +136,13 @@ function AreaAdmin({ token }: AreaAdminProps) {
       return
     }
 
+    if (
+      campos.perfil === 'ADMIN' &&
+      !window.confirm(`Tornar ${membro.nome} administrador? A conta passará a ter acesso total à área administrativa.`)
+    ) {
+      return
+    }
+
     setErroAcao('')
     setAcaoId(membro.id)
     try {
