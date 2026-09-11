@@ -6,6 +6,14 @@ import Perfil from './Perfil'
 import Webinarios from './Webinarios'
 import Ativacao from './Ativacao'
 import AreaAdmin from './AreaAdmin'
+import Auditoria from './Auditoria'
+import Mfa from './Mfa'
+
+type DesafioMfa = {
+  desafio: string
+  expiraEm: string
+  codigoDev?: string
+}
 
 
 type Ticket = {
@@ -19,10 +27,11 @@ function Portal() {
   const [senha, setSenha] = useState('')
   const [token, setToken] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<string | null>(null)
+  const [desafioMfa, setDesafioMfa] = useState<DesafioMfa | null>(null)
 
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [pagina, setPagina] = useState<
-  'dashboard' | 'tickets' | 'webinarios' | 'perfil' | 'admin'
+  'dashboard' | 'tickets' | 'webinarios' | 'perfil' | 'admin' | 'auditoria'
 >(
   'dashboard'
 )
@@ -39,19 +48,42 @@ function Portal() {
     try {
       const resposta = await login(email, senha)
 
-      setToken(resposta.token)
-
-      const dadosUsuario = await buscarMe(resposta.token)
-      setPerfil(dadosUsuario.perfil)
-
-     const meusTickets = await buscarMeusTickets(resposta.token)
-
-setTickets(meusTickets.tickets)
+      // MFA obrigatório: senha certa não devolve o token direto —
+      // devolve um desafio. O token só sai depois de Mfa.tsx confirmar
+      // o código (ver finalizarLoginComToken).
+      setDesafioMfa({
+        desafio: resposta.desafio,
+        expiraEm: resposta.expira_em,
+        codigoDev: resposta.codigo_dev,
+      })
     } catch (error) {
-      setErro('Usuário ou senha inválidos.')
+      setErro(error instanceof Error ? error.message : 'Não foi possível fazer login.')
     } finally {
       setCarregando(false)
     }
+  }
+
+  async function finalizarLoginComToken(resposta: { token: string }) {
+    setErro('')
+    setDesafioMfa(null)
+    setToken(resposta.token)
+
+    try {
+      const dadosUsuario = await buscarMe(resposta.token)
+      setPerfil(dadosUsuario.perfil)
+
+      const meusTickets = await buscarMeusTickets(resposta.token)
+      setTickets(meusTickets.tickets)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível carregar seus dados.')
+    }
+  }
+
+  function cancelarMfa() {
+    setDesafioMfa(null)
+    setEmail('')
+    setSenha('')
+    setErro('')
   }
 
   function sair() {
@@ -60,8 +92,24 @@ setTickets(meusTickets.tickets)
   setEmail('')
   setSenha('')
   setPerfil(null)
+  setDesafioMfa(null)
   setPagina('dashboard')
 }
+
+  /*
+   * MFA (segundo fator, depois da senha certa)
+   */
+  if (!token && desafioMfa) {
+    return (
+      <Mfa
+        desafio={desafioMfa.desafio}
+        expiraEm={desafioMfa.expiraEm}
+        codigoDev={desafioMfa.codigoDev}
+        onVerificado={finalizarLoginComToken}
+        onVoltar={cancelarMfa}
+      />
+    )
+  }
 
   /*
    * LOGIN
@@ -211,6 +259,16 @@ setTickets(meusTickets.tickets)
     </a>
   )}
 
+  {perfil === 'ADMIN' && (
+    <a
+      className={pagina === 'auditoria' ? 'active' : ''}
+      onClick={() => setPagina('auditoria')}
+    >
+      <span>▤</span>
+      Auditoria
+    </a>
+  )}
+
 </nav>
 
         <div className="sidebar-footer">
@@ -314,6 +372,10 @@ setTickets(meusTickets.tickets)
 ) : pagina === 'admin' && perfil === 'ADMIN' ? (
 
   <AreaAdmin token={token} />
+
+) : pagina === 'auditoria' && perfil === 'ADMIN' ? (
+
+  <Auditoria token={token} />
 
 ) : pagina === 'perfil' ? (
 

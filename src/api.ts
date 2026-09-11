@@ -21,6 +21,51 @@ export async function login(email: string, senha: string) {
   return response.json()
 }
 
+// MFA: login() com senha certa não devolve mais o token direto — devolve
+// {status:"mfa_necessario", desafio, expira_em, codigo_dev?}. O token só
+// vem de verificarMfa.
+export async function verificarMfa(desafio: string, codigo: string) {
+  const response = await fetch(`${API_URL}/login/verificar-mfa`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ desafio, codigo }),
+  })
+
+  if (response.status === 429) {
+    throw new Error('Muitas tentativas. Aguarde um pouco e tente novamente.')
+  }
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => null)
+    throw new Error(erro?.detail || 'Código inválido')
+  }
+
+  return response.json()
+}
+
+export async function reenviarCodigoMfa(desafio: string) {
+  const response = await fetch(`${API_URL}/login/reenviar-mfa`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ desafio }),
+  })
+
+  if (response.status === 429) {
+    throw new Error('Muitas tentativas de reenvio. Aguarde um pouco.')
+  }
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => null)
+    throw new Error(erro?.detail || 'Não foi possível reenviar o código')
+  }
+
+  return response.json()
+}
+
 
 export async function buscarMeusTickets(token: string) {
   const response = await fetch('http://localhost:8000/meus-tickets', {
