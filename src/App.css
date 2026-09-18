@@ -429,6 +429,44 @@ nav a:hover {
   cursor: wait;
 }
 
+.login-divider {
+  text-align: center;
+
+  color: #9aa4b2;
+
+  font-size: 12px;
+
+  margin: 18px 0;
+}
+
+.btn-govbr {
+  display: block;
+
+  text-align: center;
+
+  padding: 13px;
+
+  border: 1px solid #1351b4;
+
+  border-radius: 8px;
+
+  background: white;
+
+  color: #1351b4;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  text-decoration: none;
+
+  cursor: pointer;
+}
+
+.btn-govbr:hover {
+  background: #f0f4fb;
+}
+
 .error {
   background: #fff0f0;
 
@@ -835,6 +873,106 @@ nav a:hover {
 .perfil-item strong {
   font-size: 15px;
   color: #1f2937;
+}
+
+/* ==== Auditoria ==== */
+
+.auditoria-filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.auditoria-filtros button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.auditoria-filtros button.filtro-ativo {
+  background: #1f2937;
+  color: #fff;
+  border-color: #1f2937;
+}
+
+.auditoria-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.auditoria-table th,
+.auditoria-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.auditoria-table th {
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.auditoria-detalhe {
+  color: #6b7280;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-evento {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.evento-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.evento-falha {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.evento-ativacao {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.evento-admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.auditoria-paginacao {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.auditoria-paginacao button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+}
+
+.auditoria-paginacao button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* RESPONSIVO */

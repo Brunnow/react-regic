@@ -12,6 +12,7 @@ type Membro = {
   id: number
   nome: string
   email: string
+  cpf: string | null
   instituicao: string
   perfil: string
   status: 'ATIVO' | 'PENDENTE' | 'DESATIVADO' | 'EXCLUIDO'
@@ -39,6 +40,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
+  const [cpf, setCpf] = useState('')
   const [instituicao, setInstituicao] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erroForm, setErroForm] = useState('')
@@ -52,6 +54,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [editNome, setEditNome] = useState('')
   const [editEmail, setEditEmail] = useState('')
+  const [editCpf, setEditCpf] = useState('')
   const [editInstituicao, setEditInstituicao] = useState('')
   const [editPerfil, setEditPerfil] = useState<'MEMBRO' | 'ADMIN'>('MEMBRO')
   const [reenvio, setReenvio] = useState<{
@@ -91,7 +94,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
     setEnviando(true)
 
     try {
-      const resposta = await cadastrarMembro(token, nome, email, instituicao)
+      const resposta = await cadastrarMembro(token, nome, email, cpf, instituicao)
       // Com envio de e-mail real (EMAIL_BACKEND=smtp) o backend não
       // devolve mais link_ativacao quando o envio deu certo — só em
       // modo console (dev) ou se o envio falhar (junto com "aviso").
@@ -100,6 +103,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
       setAvisoCadastro(resposta.aviso ?? '')
       setNome('')
       setEmail('')
+      setCpf('')
       setInstituicao('')
       await carregarMembros()
     } catch (error) {
@@ -115,6 +119,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
     setEditandoId(membro.id)
     setEditNome(membro.nome)
     setEditEmail(membro.email)
+    setEditCpf(membro.cpf ?? '')
     setEditInstituicao(membro.instituicao)
     setEditPerfil(membro.perfil === 'ADMIN' ? 'ADMIN' : 'MEMBRO')
   }
@@ -123,11 +128,13 @@ function AreaAdmin({ token }: AreaAdminProps) {
     const campos: {
       nome?: string
       email?: string
+      cpf?: string
       instituicao?: string
       perfil?: 'MEMBRO' | 'ADMIN'
     } = {}
     if (editNome !== membro.nome) campos.nome = editNome
     if (editEmail !== membro.email) campos.email = editEmail
+    if (editCpf !== (membro.cpf ?? '') && editCpf !== '') campos.cpf = editCpf
     if (editInstituicao !== membro.instituicao) campos.instituicao = editInstituicao
     if (editPerfil !== membro.perfil) campos.perfil = editPerfil
 
@@ -282,6 +289,18 @@ function AreaAdmin({ token }: AreaAdminProps) {
             required
           />
 
+          <label>CPF</label>
+          <input
+            type="text"
+            value={cpf}
+            onChange={(event) => setCpf(event.target.value.replace(/\D/g, '').slice(0, 11))}
+            placeholder="Somente números — identidade usada no login via gov.br"
+            inputMode="numeric"
+            pattern="\d{11}"
+            title="11 dígitos, sem pontuação"
+            required
+          />
+
           <label>Instituição</label>
           <input
             type="text"
@@ -371,6 +390,15 @@ function AreaAdmin({ token }: AreaAdminProps) {
 
                   <label>E-mail</label>
                   <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+
+                  <label>CPF (identidade do login via gov.br)</label>
+                  <input
+                    type="text"
+                    value={editCpf}
+                    onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="Somente números"
+                    inputMode="numeric"
+                  />
 
                   <label>Instituição</label>
                   <input type="text" value={editInstituicao} onChange={(e) => setEditInstituicao(e.target.value)} />

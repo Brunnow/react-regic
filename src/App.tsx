@@ -1,7 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import { login, buscarMeusTickets, buscarMe } from './api'
+
+const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
+  govbr_cancelado: 'Login com gov.br cancelado ou incompleto. Tente novamente.',
+  govbr_state_invalido: 'Sessão de login com gov.br expirada ou inválida. Tente novamente.',
+  govbr_indisponivel: 'O Login Único gov.br está indisponível no momento. Tente novamente em instantes.',
+  govbr_sem_acesso: 'Seu CPF não tem pré-cadastro no REGIC. Contate um administrador.',
+}
 import Perfil from './Perfil'
 import Webinarios from './Webinarios'
 import Ativacao from './Ativacao'
@@ -39,6 +46,28 @@ function Portal() {
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
+  // Retorno do login via gov.br: /auth/callback na API redireciona pra
+  // cá com o token na fragment (#token=...) — nunca vai pra query
+  // string nem pro servidor, só o JS local lê — ou com ?erro=... se a
+  // pessoa não tem pré-cadastro / cancelou / a sessão expirou.
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const tokenGovBr = hash.get('token')
+    if (tokenGovBr) {
+      window.history.replaceState(null, '', window.location.pathname)
+      finalizarLoginComToken({ token: tokenGovBr })
+      return
+    }
+
+    const query = new URLSearchParams(window.location.search)
+    const erroGovBr = query.get('erro')
+    if (erroGovBr) {
+      window.history.replaceState(null, '', window.location.pathname)
+      setErro(MENSAGENS_ERRO_GOVBR[erroGovBr] || 'Não foi possível concluir o login com gov.br.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   async function fazerLogin(event: React.FormEvent) {
     event.preventDefault()
 
@@ -71,6 +100,10 @@ function Portal() {
     try {
       const dadosUsuario = await buscarMe(resposta.token)
       setPerfil(dadosUsuario.perfil)
+      // No login por senha o e-mail já vinha do formulário; no login via
+      // gov.br esse campo nunca é preenchido pelo usuário, então soma
+      // aqui direto do /me (fonte da verdade em qualquer um dos casos).
+      setEmail(dadosUsuario.email)
 
       const meusTickets = await buscarMeusTickets(resposta.token)
       setTickets(meusTickets.tickets)
@@ -176,6 +209,15 @@ function Portal() {
             </button>
 
           </form>
+
+          <div className="login-divider">ou</div>
+
+          {/* Fixo (não API_URL): o redirect_uri cadastrado no gov.br é
+              https://local.regic.gov.br/auth/callback — o cookie de PKCE
+              só volta se a ida também passar por esse mesmo domínio. */}
+          <a className="btn-govbr" href="https://local.regic.gov.br/auth/login/govbr">
+            Entrar com gov.br
+          </a>
 
           <div className="login-footer">
             Ambiente de demonstração — REGIC

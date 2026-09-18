@@ -1,4 +1,12 @@
-const API_URL = 'http://localhost:8000'
+// Acessando via https://local.regic.gov.br (fluxo do gov.br, atrás do
+// Caddy), a página é servida por HTTPS — chamar http://localhost:8000
+// direto seria "mixed content" e o navegador bloqueia (aparece como
+// "NetworkError" genérico). Nesse caso a API é acessada pelo mesmo
+// domínio, que o Caddy repassa pro backend (ver Caddyfile: @api).
+export const API_URL =
+  window.location.hostname === 'local.regic.gov.br'
+    ? 'https://local.regic.gov.br'
+    : 'http://localhost:8000'
 
 export async function login(email: string, senha: string) {
   const response = await fetch(`${API_URL}/login`, {
@@ -149,6 +157,7 @@ export async function cadastrarMembro(
   token: string,
   nome: string,
   email: string,
+  cpf: string,
   instituicao: string
 ) {
   const response = await fetch(`${API_URL}/admin/membros`, {
@@ -157,7 +166,7 @@ export async function cadastrarMembro(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ nome, email, instituicao }),
+    body: JSON.stringify({ nome, email, cpf, instituicao }),
   })
 
   if (!response.ok) {
@@ -171,6 +180,7 @@ export async function cadastrarMembro(
 type CamposEdicaoMembro = {
   nome?: string
   email?: string
+  cpf?: string
   instituicao?: string
   perfil?: 'MEMBRO' | 'ADMIN'
 }
