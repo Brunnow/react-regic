@@ -16,7 +16,22 @@ type Props = {
   token: string
 }
 
-const TIPOS_EVENTO = ['LOGIN_OK', 'LOGIN_FALHA', 'ATIVACAO', 'ADMIN_PRECADASTRO']
+const TIPOS_EVENTO = [
+  'LOGIN_OK',
+  'LOGIN_FALHA',
+  'LOGIN_BLOQUEIO_CONTA',
+  'LOGIN_MFA_ENVIADO',
+  'LOGIN_MFA_FALHA',
+  'LOGIN_GOVBR_SUCESSO',
+  'LOGIN_GOVBR_FALHA',
+  'ATIVACAO',
+  'ATIVACAO_VIA_GOVBR',
+  'ADMIN_PRECADASTRO',
+  'ADMIN_EDICAO_USUARIO',
+  'ADMIN_EXCLUSAO_USUARIO',
+  'ADMIN_CANCELAMENTO_CONVITE',
+  'ADMIN_REENVIO_CONVITE',
+]
 
 function formatarData(iso: string) {
   return new Date(iso).toLocaleString('pt-BR')
@@ -35,9 +50,12 @@ function formatarDetalhe(detalhe: string | null) {
 }
 
 function corDoEvento(evento: string) {
-  if (evento === 'LOGIN_OK') return 'evento-ok'
-  if (evento === 'LOGIN_FALHA') return 'evento-falha'
-  if (evento === 'ATIVACAO') return 'evento-ativacao'
+  // Por padrão (substring), não por lista fixa: um evento novo que a API
+  // venha a registrar (ex: outro tipo de falha de login) já cai na cor
+  // certa sem precisar lembrar de atualizar isto aqui.
+  if (evento === 'LOGIN_OK' || evento === 'LOGIN_GOVBR_SUCESSO') return 'evento-ok'
+  if (evento.includes('FALHA') || evento.includes('BLOQUEIO')) return 'evento-falha'
+  if (evento.startsWith('ATIVACAO')) return 'evento-ativacao'
   return 'evento-admin'
 }
 
