@@ -8,6 +8,7 @@ const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
   govbr_state_invalido: 'Sessão de login com gov.br expirada ou inválida. Tente novamente.',
   govbr_indisponivel: 'O Login Único gov.br está indisponível no momento. Tente novamente em instantes.',
   govbr_sem_acesso: 'Seu CPF não tem pré-cadastro no REGIC. Contate um administrador.',
+  muitas_tentativas: 'Muitas tentativas. Aguarde um minuto e tente novamente.',
 }
 import Perfil from './Perfil'
 import Webinarios from './Webinarios'
