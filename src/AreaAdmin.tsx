@@ -4,7 +4,6 @@ import {
   cadastrarMembro,
   editarMembro,
   excluirMembro,
-  cancelarConvite,
   reenviarConvite,
 } from './api'
 
@@ -192,11 +191,6 @@ function AreaAdmin({ token }: AreaAdminProps) {
     executarAcao(membro.id, () => excluirMembro(token, membro.id))
   }
 
-  function handleCancelarConvite(membro: Membro) {
-    if (!window.confirm(`Cancelar o convite pendente de ${membro.nome}?`)) return
-    executarAcao(membro.id, () => cancelarConvite(token, membro.id))
-  }
-
   function handleReenviarConvite(membro: Membro) {
     executarAcao(
       membro.id,
@@ -238,11 +232,6 @@ function AreaAdmin({ token }: AreaAdminProps) {
         {podeReenviar && (
           <button style={estiloBotaoAcao} disabled={desabilitado} onClick={() => handleReenviarConvite(membro)}>
             Reenviar convite
-          </button>
-        )}
-        {membro.status === 'PENDENTE' && (
-          <button style={estiloBotaoAcao} disabled={desabilitado} onClick={() => handleCancelarConvite(membro)}>
-            Cancelar convite
           </button>
         )}
         <button style={estiloBotaoAcao} disabled={desabilitado} onClick={() => abrirEdicao(membro)}>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
-import { login, buscarMeusTickets, buscarMe } from './api'
+import { buscarMeusTickets, buscarMe } from './api'
 
 const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
   govbr_cancelado: 'Login com gov.br cancelado ou incompleto. Tente novamente.',
@@ -12,17 +12,8 @@ const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
 }
 import Perfil from './Perfil'
 import Webinarios from './Webinarios'
-import Ativacao from './Ativacao'
 import AreaAdmin from './AreaAdmin'
 import Auditoria from './Auditoria'
-import Mfa from './Mfa'
-
-type DesafioMfa = {
-  desafio: string
-  expiraEm: string
-  codigoDev?: string
-}
-
 
 type Ticket = {
   id: number
@@ -32,10 +23,8 @@ type Ticket = {
 
 function Portal() {
   const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
   const [token, setToken] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<string | null>(null)
-  const [desafioMfa, setDesafioMfa] = useState<DesafioMfa | null>(null)
 
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [pagina, setPagina] = useState<
@@ -45,7 +34,6 @@ function Portal() {
 )
 
   const [erro, setErro] = useState('')
-  const [carregando, setCarregando] = useState(false)
 
   // Retorno do login via gov.br: /auth/callback na API redireciona pra
   // cá com o token na fragment (#token=...) — nunca vai pra query
@@ -69,33 +57,8 @@ function Portal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function fazerLogin(event: React.FormEvent) {
-    event.preventDefault()
-
-    setErro('')
-    setCarregando(true)
-
-    try {
-      const resposta = await login(email, senha)
-
-      // MFA obrigatório: senha certa não devolve o token direto —
-      // devolve um desafio. O token só sai depois de Mfa.tsx confirmar
-      // o código (ver finalizarLoginComToken).
-      setDesafioMfa({
-        desafio: resposta.desafio,
-        expiraEm: resposta.expira_em,
-        codigoDev: resposta.codigo_dev,
-      })
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Não foi possível fazer login.')
-    } finally {
-      setCarregando(false)
-    }
-  }
-
   async function finalizarLoginComToken(resposta: { token: string }) {
     setErro('')
-    setDesafioMfa(null)
     setToken(resposta.token)
 
     try {
@@ -113,37 +76,13 @@ function Portal() {
     }
   }
 
-  function cancelarMfa() {
-    setDesafioMfa(null)
-    setEmail('')
-    setSenha('')
-    setErro('')
-  }
-
   function sair() {
   setToken(null)
   setTickets([])
   setEmail('')
-  setSenha('')
   setPerfil(null)
-  setDesafioMfa(null)
   setPagina('dashboard')
 }
-
-  /*
-   * MFA (segundo fator, depois da senha certa)
-   */
-  if (!token && desafioMfa) {
-    return (
-      <Mfa
-        desafio={desafioMfa.desafio}
-        expiraEm={desafioMfa.expiraEm}
-        codigoDev={desafioMfa.codigoDev}
-        onVerificado={finalizarLoginComToken}
-        onVoltar={cancelarMfa}
-      />
-    )
-  }
 
   /*
    * LOGIN
@@ -166,52 +105,15 @@ function Portal() {
           <div className="login-header">
             <h1>Acesso ao Portal</h1>
             <p>
-              Entre com suas credenciais para acessar seus atendimentos.
+              Entre com sua conta gov.br para acessar seus atendimentos.
             </p>
           </div>
 
-          <form onSubmit={fazerLogin}>
-
-            <label>
-            E-mail
-            </label>
-
-<input
-  type="email"
-  value={email}
-  onChange={(event) => setEmail(event.target.value)}
-  placeholder="Digite seu e-mail"
-  required
-/>
-
-            <label>
-              Senha
-            </label>
-
-            <input
-              type="password"
-              value={senha}
-              onChange={(event) => setSenha(event.target.value)}
-              placeholder="Digite sua senha"
-              required
-            />
-
-            {erro && (
-              <div className="error">
-                {erro}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={carregando}
-            >
-              {carregando ? 'Entrando...' : 'Entrar'}
-            </button>
-
-          </form>
-
-          <div className="login-divider">ou</div>
+          {erro && (
+            <div className="error">
+              {erro}
+            </div>
+          )}
 
           {/* Fixo (não API_URL): o redirect_uri cadastrado no gov.br é
               https://local.regic.gov.br/auth/callback — o cookie de PKCE
@@ -482,7 +384,6 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Portal />} />
-        <Route path="/ativar/:token" element={<Ativacao />} />
       </Routes>
     </BrowserRouter>
   )
