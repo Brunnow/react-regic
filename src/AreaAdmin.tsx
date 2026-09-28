@@ -119,7 +119,10 @@ function AreaAdmin({ token }: AreaAdminProps) {
     setEditandoId(membro.id)
     setEditNome(membro.nome)
     setEditEmail(membro.email)
-    setEditCpf(membro.cpf ?? '')
+    // Sempre vazio, nunca membro.cpf: a listagem só traz o CPF mascarado
+    // (LGPD) — pré-preencher aqui mostraria o mascarado, e salvar sem
+    // mexer mandaria a máscara pro backend como se fosse o CPF real.
+    setEditCpf('')
     setEditInstituicao(membro.instituicao)
     setEditPerfil(membro.perfil === 'ADMIN' ? 'ADMIN' : 'MEMBRO')
   }
@@ -134,7 +137,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
     } = {}
     if (editNome !== membro.nome) campos.nome = editNome
     if (editEmail !== membro.email) campos.email = editEmail
-    if (editCpf !== (membro.cpf ?? '') && editCpf !== '') campos.cpf = editCpf
+    if (editCpf !== '') campos.cpf = editCpf
     if (editInstituicao !== membro.instituicao) campos.instituicao = editInstituicao
     if (editPerfil !== membro.perfil) campos.perfil = editPerfil
 
@@ -396,7 +399,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
                     type="text"
                     value={editCpf}
                     onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                    placeholder="Somente números"
+                    placeholder="Deixe em branco para não alterar"
                     inputMode="numeric"
                   />
 
