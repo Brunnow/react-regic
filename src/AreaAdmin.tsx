@@ -14,7 +14,7 @@ type Membro = {
   cpf: string | null
   instituicao: string
   perfil: string
-  status: 'ATIVO' | 'PENDENTE' | 'DESATIVADO' | 'EXCLUIDO'
+  status: 'ATIVO' | 'PENDENTE' | 'EXCLUIDO'
 }
 
 type AreaAdminProps = {
@@ -60,7 +60,7 @@ function AreaAdmin({ token }: AreaAdminProps) {
     id: number
     mensagem: string
     link: string | null
-    expiraEm: string
+    expiraEm: string | null
     aviso: string | null
   } | null>(null)
 
@@ -196,19 +196,18 @@ function AreaAdmin({ token }: AreaAdminProps) {
       membro.id,
       () => reenviarConvite(token, membro.id),
       (resultado) => {
-        // Idem ao cadastro: link_ativacao só vem preenchido em modo
-        // console (dev) ou se o envio de e-mail tiver falhado (aviso).
+        // Só gov.br: a resposta não traz mais link/token de ativação.
         const r = resultado as {
           mensagem: string
           link_ativacao?: string
-          expira_em: string
+          expira_em?: string
           aviso?: string
         }
         setReenvio({
           id: membro.id,
           mensagem: r.mensagem,
           link: r.link_ativacao ?? null,
-          expiraEm: r.expira_em,
+          expiraEm: r.expira_em ?? null,
           aviso: r.aviso ?? null,
         })
       }
@@ -224,14 +223,14 @@ function AreaAdmin({ token }: AreaAdminProps) {
   function acoesDoMembro(membro: Membro) {
     if (membro.status === 'EXCLUIDO') return null
 
-    const podeReenviar = membro.status === 'PENDENTE' || membro.status === 'DESATIVADO'
+    const podeReenviar = membro.status === 'PENDENTE'
     const desabilitado = acaoId === membro.id
 
     return (
       <>
         {podeReenviar && (
           <button style={estiloBotaoAcao} disabled={desabilitado} onClick={() => handleReenviarConvite(membro)}>
-            Reenviar convite
+            Reenviar aviso
           </button>
         )}
         <button style={estiloBotaoAcao} disabled={desabilitado} onClick={() => abrirEdicao(membro)}>
