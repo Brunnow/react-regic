@@ -8,25 +8,80 @@ export const API_URL =
     ? 'https://local.regic.gov.br'
     : 'http://localhost:8000'
 
-export async function buscarMeusTickets(token: string) {
-  const response = await fetch('http://localhost:8000/meus-tickets', {
+export async function listarFeeds(token: string) {
+  const response = await fetch(`${API_URL}/feeds`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   })
 
   if (!response.ok) {
-    throw new Error('Não foi possível carregar os tickets')
+    throw new Error('Não foi possível carregar os feeds')
   }
 
-  const data = await response.json()
+  return response.json()
+}
 
-  return data
+export async function criarFeed(token: string, titulo: string, corpo: string) {
+  const response = await fetch(`${API_URL}/feeds`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ titulo, corpo }),
+  })
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => null)
+    throw new Error(erro?.detail || 'Não foi possível publicar o feed')
+  }
+
+  return response.json()
+}
+
+type CamposEdicaoFeed = {
+  titulo?: string
+  corpo?: string
+}
+
+export async function editarFeed(token: string, id: number, campos: CamposEdicaoFeed) {
+  const response = await fetch(`${API_URL}/feeds/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(campos),
+  })
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => null)
+    throw new Error(erro?.detail || 'Não foi possível editar o feed')
+  }
+
+  return response.json()
+}
+
+export async function excluirFeed(token: string, id: number) {
+  const response = await fetch(`${API_URL}/feeds/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => null)
+    throw new Error(erro?.detail || 'Não foi possível excluir o feed')
+  }
+
+  return response.json()
 }
 
 export async function buscarWebinarios(token: string) {
   const response = await fetch(
-    'http://localhost:8000/webinarios',
+    `${API_URL}/webinarios`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

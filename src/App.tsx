@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
-import { buscarMeusTickets, buscarMe } from './api'
+import { buscarMe } from './api'
 
 const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
   govbr_cancelado: 'Login com gov.br cancelado ou incompleto. Tente novamente.',
@@ -12,23 +12,17 @@ const MENSAGENS_ERRO_GOVBR: Record<string, string> = {
 }
 import Perfil from './Perfil'
 import Webinarios from './Webinarios'
+import Feeds from './Feeds'
 import AreaAdmin from './AreaAdmin'
 import Auditoria from './Auditoria'
-
-type Ticket = {
-  id: number
-  titulo: string
-  status: string
-}
 
 function Portal() {
   const [email, setEmail] = useState('')
   const [token, setToken] = useState<string | null>(null)
   const [perfil, setPerfil] = useState<string | null>(null)
 
-  const [tickets, setTickets] = useState<Ticket[]>([])
   const [pagina, setPagina] = useState<
-  'dashboard' | 'tickets' | 'webinarios' | 'perfil' | 'admin' | 'auditoria'
+  'dashboard' | 'feeds' | 'webinarios' | 'perfil' | 'admin' | 'auditoria'
 >(
   'dashboard'
 )
@@ -68,9 +62,6 @@ function Portal() {
       // gov.br esse campo nunca é preenchido pelo usuário, então soma
       // aqui direto do /me (fonte da verdade em qualquer um dos casos).
       setEmail(dadosUsuario.email)
-
-      const meusTickets = await buscarMeusTickets(resposta.token)
-      setTickets(meusTickets.tickets)
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível carregar seus dados.')
     }
@@ -78,7 +69,6 @@ function Portal() {
 
   function sair() {
   setToken(null)
-  setTickets([])
   setEmail('')
   setPerfil(null)
   setPagina('dashboard')
@@ -136,16 +126,6 @@ function Portal() {
    * DASHBOARD
    */
 
-  const total = tickets.length
-
-  const abertos = tickets.filter(
-    (ticket) => ticket.status !== 'resolvido'
-  ).length
-
-  const resolvidos = tickets.filter(
-    (ticket) => ticket.status === 'resolvido'
-  ).length
-
   return (
     <div className="app">
 
@@ -171,11 +151,11 @@ function Portal() {
   </a>
 
   <a
-    className={pagina === 'tickets' ? 'active' : ''}
-    onClick={() => setPagina('tickets')}
+    className={pagina === 'feeds' ? 'active' : ''}
+    onClick={() => setPagina('feeds')}
   >
     <span>▣</span>
-    Meus Tickets
+    Feeds
   </a>
 
   <a
@@ -230,7 +210,7 @@ function Portal() {
   <div>
     <h1>Dashboard</h1>
     <p>
-      Visão geral dos seus atendimentos
+      Visão geral do portal
     </p>
   </div>
 
@@ -260,59 +240,9 @@ function Portal() {
 
   <Webinarios token={token} />
 
-) : pagina === 'tickets' ? (
+) : pagina === 'feeds' ? (
 
-  <section className="tickets-section">
-
-    <div className="section-header">
-      <div>
-        <h2>Meus Tickets</h2>
-        <p>
-          Tickets associados ao seu usuário
-        </p>
-      </div>
-    </div>
-
-    <div className="ticket-list">
-
-      {tickets.length === 0 && (
-        <div className="empty">
-          Nenhum ticket encontrado.
-        </div>
-      )}
-
-      {tickets.map((ticket) => (
-
-        <div
-          className="ticket"
-          key={ticket.id}
-        >
-
-          <div className="ticket-info">
-            <strong>#{ticket.id}</strong>
-
-            <span>
-              {ticket.titulo}
-            </span>
-          </div>
-
-          <span
-            className={
-              ticket.status === 'resolvido'
-                ? 'status closed'
-                : 'status open'
-            }
-          >
-            {ticket.status}
-          </span>
-
-        </div>
-
-      ))}
-
-    </div>
-
-  </section>
+  <Feeds token={token} perfil={perfil} />
 
 ) : pagina === 'admin' && perfil === 'ADMIN' ? (
 
@@ -328,47 +258,8 @@ function Portal() {
 
 ) : (
 
-  <section className="cards">
-
-    <div className="card">
-
-      <div className="card-icon blue">
-        ▣
-      </div>
-
-      <div>
-        <span>Total de tickets</span>
-        <strong>{total}</strong>
-      </div>
-
-    </div>
-
-    <div className="card">
-
-      <div className="card-icon orange">
-        ◷
-      </div>
-
-      <div>
-        <span>Em andamento</span>
-        <strong>{abertos}</strong>
-      </div>
-
-    </div>
-
-    <div className="card">
-
-      <div className="card-icon green">
-        ✓
-      </div>
-
-      <div>
-        <span>Resolvidos</span>
-        <strong>{resolvidos}</strong>
-      </div>
-
-    </div>
-
+  <section className="feeds-section">
+    <p>Bem-vindo(a) ao Portal REGIC. Use o menu ao lado para ver os feeds, webinários e seu perfil.</p>
   </section>
 
 )}
